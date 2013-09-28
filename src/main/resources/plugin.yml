@@ -1,4 +1,4 @@
-name: WhitelistManager
+name: ${project.artifactId}
 main: co.mcme.whitelistmanager.WhitelistManager
-version: 0.1
+version: ${project.version}
 author: meggawatts
