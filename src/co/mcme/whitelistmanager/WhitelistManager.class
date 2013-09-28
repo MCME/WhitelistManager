@@ -1,0 +1,52 @@
+package co.mcme.whitelistmanager;
+
+import co.mcme.whitelistmanager.util.Util;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.bukkit.Server;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.FileConfigurationOptions;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerLoginEvent.Result;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class WhitelistManager extends JavaPlugin
+  implements Listener
+{
+  public static final Logger log = Logger.getLogger("Minecraft");
+
+  public void onEnable()
+  {
+    getServer().setWhitelist(false);
+    getServer().getPluginManager().registerEvents(this, this);
+    getConfig().options().copyDefaults(true);
+    saveConfig();
+  }
+
+  @EventHandler
+  public void onJoin(PlayerLoginEvent event) {
+    Player joining = event.getPlayer();
+    boolean agreed = false;
+    try {
+      agreed = checkWhitelist(joining);
+    } catch (Exception ex) {
+      log.severe(ex.toString());
+    }
+    if (agreed) {
+      log.log(Level.INFO, "{0} is whitelisted, allowed", joining.getName());
+      event.allow();
+    } else {
+      log.log(Level.INFO, "{0} is not whitelisted, disallowed", joining.getName());
+      event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "You must apply for whitelist at http://mcme.co/whitelist");
+    }
+  }
+
+  public boolean checkWhitelist(Player p) throws Exception {
+    log.log(Level.INFO, "Checking whitelist status of {0}", p.getName());
+    return Util.getBooleanFromUrl(getConfig().getString("accesscontrol.urls.whitelist") + p.getName());
+  }
+}

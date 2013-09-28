@@ -1,0 +1,3 @@
+accesscontrol:
+  urls:
+    whitelist: "http://api.mcme.co/whitelist/iswhitelisted/"

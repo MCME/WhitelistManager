@@ -1,0 +1,4 @@
+name: WhitelistManager
+main: co.mcme.whitelistmanager.WhitelistManager
+version: 0.1
+author: meggawatts
