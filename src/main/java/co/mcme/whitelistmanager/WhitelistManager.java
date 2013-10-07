@@ -35,22 +35,26 @@ public class WhitelistManager extends JavaPlugin implements Listener {
         getConfig().options().copyDefaults(true);
         saveConfig();
     }
-    
+
     @EventHandler
     public void onJoin(PlayerLoginEvent event) {
         Player joining = event.getPlayer();
         boolean agreed = false;
-        try {
-            agreed = checkWhitelist(joining);
-        } catch (Exception ex) {
-            log.severe(ex.toString());
-        }
-        if (agreed) {
-            log.log(Level.INFO, "{0} is whitelisted, allowed", joining.getName());
-            event.allow();
+        if (!joining.isBanned()) {
+            try {
+                agreed = checkWhitelist(joining);
+            } catch (Exception ex) {
+                log.severe(ex.toString());
+            }
+            if (agreed) {
+                log.log(Level.INFO, "{0} is whitelisted, allowed", joining.getName());
+                event.allow();
+            } else {
+                log.log(Level.INFO, "{0} is not whitelisted, disallowed", joining.getName());
+                event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "You must apply for whitelist at http://mcme.co/whitelist");
+            }
         } else {
-            log.log(Level.INFO, "{0} is not whitelisted, disallowed", joining.getName());
-            event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "You must apply for whitelist at http://mcme.co/whitelist");
+            event.disallow(PlayerLoginEvent.Result.KICK_BANNED, "You are banned. http://mcme.co/o/lookup/" + joining.getName());
         }
     }
 
