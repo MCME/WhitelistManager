@@ -40,7 +40,7 @@ public class WhitelistManager extends JavaPlugin implements Listener {
     public void onJoin(PlayerLoginEvent event) {
         Player joining = event.getPlayer();
         boolean agreed = false;
-        if (!joining.isBanned() {
+        if (!joining.isBanned()) {
             try {
             agreed = checkWhitelist(joining);
             } catch (Exception ex) {
