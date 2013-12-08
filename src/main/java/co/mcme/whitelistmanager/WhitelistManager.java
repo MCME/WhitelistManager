@@ -45,6 +45,7 @@ public class WhitelistManager extends JavaPlugin implements Listener {
         boolean listed = false;
         if (!joining.isBanned()) {
             if (cache.contains(joining.getName())) {
+                log.log(Level.INFO, "{0} is cached as whitelisted, allowed", joining.getName());
                 event.allow();
                 return;
             }
