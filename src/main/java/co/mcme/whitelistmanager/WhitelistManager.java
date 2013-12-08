@@ -16,8 +16,10 @@
 package co.mcme.whitelistmanager;
 
 import co.mcme.whitelistmanager.util.Util;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -26,7 +28,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class WhitelistManager extends JavaPlugin implements Listener {
 
-    public static final Logger log = Logger.getLogger("Minecraft");
+    public static final Logger log = Bukkit.getLogger();
+    ArrayList<String> cache = new ArrayList();
 
     @Override
     public void onEnable() {
@@ -39,19 +42,24 @@ public class WhitelistManager extends JavaPlugin implements Listener {
     @EventHandler
     public void onJoin(PlayerLoginEvent event) {
         Player joining = event.getPlayer();
-        boolean agreed = false;
+        boolean listed = false;
         if (!joining.isBanned()) {
+            if (cache.contains(joining.getName())) {
+                event.allow();
+                return;
+            }
             try {
-                agreed = checkWhitelist(joining);
+                listed = checkWhitelist(joining);
             } catch (Exception ex) {
                 log.severe(ex.toString());
             }
-            if (agreed) {
+            if (listed) {
                 log.log(Level.INFO, "{0} is whitelisted, allowed", joining.getName());
                 event.allow();
+                cache.add(joining.getName());
             } else {
                 log.log(Level.INFO, "{0} is not whitelisted, disallowed", joining.getName());
-                event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "You must apply for whitelist at http://mcme.co/whitelist");
+                event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "You must apply for whitelist at http://whitelist.mcme.co");
             }
         } else {
             event.disallow(PlayerLoginEvent.Result.KICK_BANNED, "You are banned. http://mcme.co/o/lookup/" + joining.getName());
