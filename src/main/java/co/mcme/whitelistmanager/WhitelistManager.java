@@ -15,21 +15,32 @@
  */
 package co.mcme.whitelistmanager;
 
+import co.mcme.whitelistmanager.util.Cache;
 import co.mcme.whitelistmanager.util.Util;
-import java.util.ArrayList;
-import java.util.logging.Level;
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Logger;
+import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 
 public class WhitelistManager extends JavaPlugin implements Listener {
 
     public static final Logger log = Bukkit.getLogger();
-    ArrayList<String> cache = new ArrayList();
+    private static final ObjectMapper jsonMapper = new ObjectMapper().configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+    File cacheFile;
+    private Cache cache;
+    @Getter
+    private static Server serverInstance;
+    @Getter
+    private static WhitelistManager pluginInstance;
 
     @Override
     public void onEnable() {
@@ -37,6 +48,14 @@ public class WhitelistManager extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getConfig().options().copyDefaults(true);
         saveConfig();
+        cacheFile = new File(this.getDataFolder(), "cache.json");
+        if (cacheFile.exists()) {
+            loadCache();
+        } else {
+            cache = new Cache();
+        }
+        serverInstance = getServer();
+        pluginInstance = this;
     }
 
     @EventHandler
@@ -44,22 +63,23 @@ public class WhitelistManager extends JavaPlugin implements Listener {
         Player joining = event.getPlayer();
         boolean listed = false;
         if (!joining.isBanned()) {
-            if (cache.contains(joining.getName())) {
-                log.log(Level.INFO, "{0} is cached as whitelisted, allowed", joining.getName());
+            if (cache.getCache().contains(joining.getName())) {
+                Util.info(joining.getName() + " is cached as whitelisted, allowed");
                 event.allow();
                 return;
             }
             try {
                 listed = checkWhitelist(joining);
             } catch (Exception ex) {
+                Util.severe(ex.toString());
                 log.severe(ex.toString());
             }
             if (listed) {
-                log.log(Level.INFO, "{0} is whitelisted, allowed", joining.getName());
+                Util.info(joining.getName() + " is whitelisted, allowed");
                 event.allow();
-                cache.add(joining.getName());
+                cacheUsername(joining.getName());
             } else {
-                log.log(Level.INFO, "{0} is not whitelisted, disallowed", joining.getName());
+                Util.info(joining.getName() + " is not whitelisted, disallowed");
                 event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "You must apply for whitelist at http://whitelist.mcme.co");
             }
         } else {
@@ -68,7 +88,25 @@ public class WhitelistManager extends JavaPlugin implements Listener {
     }
 
     public boolean checkWhitelist(Player p) throws Exception {
-        log.log(Level.INFO, "Checking whitelist status of {0}", p.getName());
         return Util.getBooleanFromUrl(getConfig().getString("accesscontrol.urls.whitelist") + p.getName());
+    }
+
+    private void cacheUsername(String name) {
+        if (!cache.getCache().contains(name)) {
+            cache.getCache().add(name);
+        }
+        try {
+            jsonMapper.writeValue(cacheFile, cache);
+        } catch (IOException ex) {
+            Util.severe(ex.toString());
+        }
+    }
+
+    private void loadCache() {
+        try {
+            cache = jsonMapper.readValue(cacheFile, Cache.class);
+        } catch (IOException ex) {
+            Util.severe(ex.toString());
+        }
     }
 }

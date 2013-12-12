@@ -15,12 +15,16 @@
  */
 package co.mcme.whitelistmanager.util;
 
+import co.mcme.whitelistmanager.WhitelistManager;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.logging.Logger;
 
 public class Util {
+
+    private static final Logger log = WhitelistManager.getServerInstance().getLogger();
 
     public static boolean getBooleanFromUrl(String url) throws Exception {
         URL website = new URL(url);
@@ -37,5 +41,17 @@ public class Util {
         } else {
             return false;
         }
+    }
+
+    public static void info(String msg) {
+        log.info("[Whitelist] " + msg);
+    }
+
+    public static void warning(String msg) {
+        log.warning("[Whitelist] " + msg);
+    }
+
+    public static void severe(String msg) {
+        log.severe("[Whitelist] " + msg);
     }
 }
