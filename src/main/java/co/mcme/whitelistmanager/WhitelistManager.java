@@ -48,7 +48,11 @@ public class WhitelistManager extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getConfig().options().copyDefaults(true);
         saveConfig();
-        cacheFile = new File(this.getDataFolder(), "cache.json");
+        if (getConfig().getString("accesscontrol.method").equalsIgnoreCase("uuid")) {
+            cacheFile = new File(this.getDataFolder(), "uuidcache.json");
+        } else {
+            cacheFile = new File(this.getDataFolder(), "namecache.json");
+        }
         if (cacheFile.exists()) {
             loadCache();
         } else {
@@ -63,10 +67,18 @@ public class WhitelistManager extends JavaPlugin implements Listener {
         Player joining = event.getPlayer();
         boolean listed = false;
         if (!joining.isBanned()) {
-            if (cache.getCache().contains(joining.getName())) {
-                Util.info(joining.getName() + " is cached as whitelisted, allowed");
-                event.allow();
-                return;
+            if (getConfig().getString("accesscontrol.method").equalsIgnoreCase("uuid")) {
+                if (cache.getCache().contains(joining.getUniqueId().toString().replaceAll("-", ""))) {
+                    Util.info(joining.getName() + " is cached as whitelisted, allowed");
+                    event.allow();
+                    return;
+                }
+            } else {
+                if (cache.getCache().contains(joining.getName())) {
+                    Util.info(joining.getName() + " is cached as whitelisted, allowed");
+                    event.allow();
+                    return;
+                }
             }
             try {
                 listed = checkWhitelist(joining);
@@ -77,7 +89,11 @@ public class WhitelistManager extends JavaPlugin implements Listener {
             if (listed) {
                 Util.info(joining.getName() + " is whitelisted, allowed");
                 event.allow();
-                cacheUsername(joining.getName());
+                if (getConfig().getString("accesscontrol.method").equalsIgnoreCase("uuid")) {
+                    cacheString(joining.getUniqueId().toString().replaceAll("-", ""));
+                } else {
+                    cacheString(joining.getName());
+                }
             } else {
                 Util.info(joining.getName() + " is not whitelisted, disallowed");
                 event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "You must apply for whitelist at http://whitelist.mcme.co");
@@ -88,12 +104,15 @@ public class WhitelistManager extends JavaPlugin implements Listener {
     }
 
     public boolean checkWhitelist(Player p) throws Exception {
-        return Util.getBooleanFromUrl(getConfig().getString("accesscontrol.urls.whitelist") + p.getName());
+        if (getConfig().getString("accesscontrol.method").equalsIgnoreCase("uuid")) {
+            return Util.getBooleanFromUrl(getConfig().getString("accesscontrol.urls.uuid") + p.getUniqueId().toString().replaceAll("-", ""));
+        }
+        return Util.getBooleanFromUrl(getConfig().getString("accesscontrol.urls.name") + p.getName());
     }
 
-    private void cacheUsername(String name) {
-        if (!cache.getCache().contains(name)) {
-            cache.getCache().add(name);
+    private void cacheString(String tocache) {
+        if (!cache.getCache().contains(tocache)) {
+            cache.getCache().add(tocache);
         }
         try {
             jsonMapper.writeValue(cacheFile, cache);

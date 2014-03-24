@@ -1,3 +1,5 @@
 accesscontrol:
   urls:
-    whitelist: "http://api.mcme.co/whitelist/iswhitelisted/"
+    name: "http://api.mcme.co/whitelist/iswhitelisted/"
+    uuid: "http://api.mcme.co/whitelist/uuidcheck/"
+  method: uuid
